@@ -3,6 +3,7 @@ const express = require('express');
 //importamos el fichero con los datos que necesita nuestro Router
 const {todos} = require('../data/index');
 
+const taskController = require('../controllers/taskController')
 
 /*
 
@@ -17,13 +18,20 @@ const todoRouter = express.Router();
 
 todoRouter.get('/todo', (req, res) => {
   //devolver todos los "todos" que hay en el array con formato JSON.
+  const todo = taskController.getAllTasks();
+  res.json(todo);
 });
 
 todoRouter.post('/todo', (req, res) => {
-  
+  const { title } = req.body;
+  if(!title) {
+    return res.status(400).json({ error: 'El titulo es obligatorio'});
+  }
+
+  const newTask = taskController.addTask(title);
+  res.status(201).json(newTask);
   //crear un nuevo objeto con estructura {id, text, fecha, done} con los datos que vienen en el BODY de la Request y meterlos dentro de el array.
   //el nuevo objeto debe tener como id un numero mas que el numero actual de elementos guardados en el array.
-
 });
 
 
@@ -40,6 +48,13 @@ Si con Insomnia o Postman hicisemos una peticion GET a la ruta /todo/12, está s
 
 */
 todoRouter.get('/todo/:id',  (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const task = taskController.getTaskById(taskId);
+  if (task){
+    res.json(task);
+  } else {
+    res.status(404).json({ error: 'Tarea no encontrada'})
+  }
 
   //recogemos el valor de la variable del path llamada "id" y lo transformarlo a un numero (todos nuestros ids son numericos).
   //cualquier valor que recogemos de req.params será siempre un String. Por eso lo debemos convertir a numero.
@@ -54,6 +69,13 @@ todoRouter.get('/todo/:id',  (req, res) => {
 // MISSING '/todo/:id' PATCH
 
 todoRouter.patch('/todo/:id',  (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const updatedTask = taskController.updateTask(taskId, req.body);
+  if (updatedTask) {
+    res.json(updatedTask);
+  } else{
+    res.status(404).json({ error: 'Tarea no encontrada'});
+  }
   //recogemos el valor de la variable del path llamada "id" y lo transformarlo a un numero (todos nuestros ids son numericos).
   //cualquier valor que recogemos de req.params será siempre un String. Por eso lo debemos convertir a numero.
   
@@ -64,10 +86,29 @@ todoRouter.patch('/todo/:id',  (req, res) => {
   
 });
 
+
+todoRouter.put('/todo/:id', (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const updatedTask = taskController.toggleTaskCompletion(taskId);
+
+  if (updatedTask) {
+    res.json(updatedTask);
+  } else {
+    res.status(404).json({ error: 'Tarea no encontrada' });
+  }
+});
+
 // MISSING '/todo/:id' DELETE
 
 
 todoRouter.delete('/todo/:id',  (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const deletedTask = taskController.deleteTAsk(taskId);
+  if(deletedTask) {
+    res.json(deletedTask);
+  } else {
+    res.status(404).json({ error: 'Tarea no encontrada'});
+  }
   //recogemos el valor de la variable del path llamada "id" y lo transformarlo a un numero (todos nuestros ids son numericos).
   //cualquier valor que recogemos de req.params será siempre un String. Por eso lo debemos convertir a numero.
   
